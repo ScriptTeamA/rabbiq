@@ -11,8 +11,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-from django.db.models import Count
-import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0fqr9fcqw5keuk@f+c%)6yx6x0-nbgf0^od$7&xc^nnm!+99m%'
+SECRET_KEY = 'django-insecure-cz(#22eek1%)j$)6bz2)f-q7dveqo#rj)ul^a#kfrqsl-3prl%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -39,10 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    #Thrid Party Apps
-    'api',
-    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -60,7 +54,7 @@ ROOT_URLCONF = 'rabbiq.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,'templates')],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -72,12 +66,6 @@ TEMPLATES = [
         },
     },
 ]
-
-
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
-}
 
 WSGI_APPLICATION = 'rabbiq.wsgi.application'
 
