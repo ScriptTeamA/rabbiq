@@ -1,62 +1,79 @@
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import (
-    BaseUserManager, AbstractBaseUser
-)
+from django.db import models
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin, Group
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import Permission
 
 class UserManager(BaseUserManager):
-    def create_user(self,email,phone_number,national_ID,password=None):
+    def create_user(self, email, phone_number, national_ID, first_name='', last_name='', password=None):
         if not email:
-            raise ValueError('user must have an email address')
-        
+            raise ValueError('User must have an email address')
+
         user = self.model(
-            email = self.normalize_email(email),
-            phone_number = phone_number,
-            national_ID = national_ID,
+            email=self.normalize_email(email),
+            phone_number=phone_number,
+            national_ID=national_ID,
+            first_name=first_name,
+            last_name=last_name,
         )
         user.set_password(password)
         user.save(using=self._db)
         return user
     
-    def create_superuser(self,email,phone_number,national_ID,password=None):
-        user  = self.create_user(
-            email,
-            password=password,
+    def create_superuser(self, email, phone_number, national_ID, first_name='', last_name='', password=None):
+        user = self.create_user(
+            email=email,
             phone_number=phone_number,
-            national_ID = national_ID,
-
+            national_ID=national_ID,
+            first_name=first_name,
+            last_name=last_name,
+            password=password,
         )
-        user.is_admin = True
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(password)
+        user.save(using=self._db)
+        
+        # Assign all available permissions to the superuser
+        permissions = Permission.objects.all()
+        user.user_permissions.set(permissions)
+        
+        return user
+    
+    def add_user_to_group(self, user, group_name):
+        group = Group.objects.get(name=group_name)
+        user.groups.add(group)
         user.save(using=self._db)
         return user
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, max_length=254)
     phone_number = models.CharField(max_length=50)
-    national_ID = models.CharField(unique=True,max_length=50)
+    national_ID = models.CharField(unique=True, max_length=50)
+    first_name = models.CharField(max_length=50, blank=True)
+    last_name = models.CharField(max_length=50, blank=True)
     is_active = models.BooleanField(default=True)
-    is_admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = [
         'phone_number',
-        'national_ID'
+        'national_ID',
     ]
 
     def __str__(self):
         return self.email
-
-    def has_perm(self,perm,obj=None):
-        return True
     
-    def has_module_perms(self,app_label):
-        return True
-    
-    @property
-    def is_staff(self):
-        return self.is_admin
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            # New instance, set_password will hash the password
+            self.set_password(self.password)
+        return super().save(*args, **kwargs)
+    class Meta:
+        verbose_name = 'Employee'
 
 
 class UserProfile(models.Model):
@@ -110,6 +127,9 @@ class UserProfile(models.Model):
             comments = 'You can improve your performance.'
 
         return comments
+    
+    class Meta:
+        verbose_name = 'Employee Profile'
 
 
 class Task(models.Model):
@@ -131,6 +151,9 @@ class TimeEntry(models.Model):
     end_time = models.DateTimeField()
     approved = models.BooleanField(default=False)
     notes = models.TextField()
+
+    class Meta:
+        verbose_name = "timesheet"
 
 
 class PerformanceAppraisal(models.Model):
