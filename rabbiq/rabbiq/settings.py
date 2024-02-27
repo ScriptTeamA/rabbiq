@@ -74,6 +74,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rabbiq.wsgi.application'
 
+AUTH_USER_MODEL = 'rabbiq_api.User'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
