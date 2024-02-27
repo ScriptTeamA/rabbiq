@@ -8,9 +8,8 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ("email", "performance")
 
     def performance(self, obj):
-        from django.db.models import Avg
         result = PerformanceAppraisal.objects.get(user=obj)
-        return result["average_performance"]
+        return result.average_performance
 
 
 @admin.register(UserProfile)

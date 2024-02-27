@@ -6,17 +6,10 @@ from .models import UserProfile,User,PerformanceAppraisal
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
+        PerformanceAppraisal.objects.update_or_create(user=instance)
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.userprofile.save()
-
-
-@receiver(post_save, sender=PerformanceAppraisal)
-def create_user_perfomance(sender, instance, created, **kwargs):
-    if created:
-        PerformanceAppraisal.objects.create(user=instance)
-
-@receiver(post_save, sender=PerformanceAppraisal)
-def save_user_perfomance(sender, instance, **kwargs):
     instance.performanceappraisal.save()
+
