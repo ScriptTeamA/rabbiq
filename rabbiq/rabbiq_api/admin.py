@@ -5,7 +5,12 @@ from .models import User,UserProfile,Task,TimeEntry,PerformanceAppraisal
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    pass
+    list_display = ("email", "performance")
+
+    def performance(self, obj):
+        from django.db.models import Avg
+        result = PerformanceAppraisal.objects.get(user=obj)
+        return result["average_performance"]
 
 
 @admin.register(UserProfile)
