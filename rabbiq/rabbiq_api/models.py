@@ -129,7 +129,7 @@ class TimeEntry(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-    status = models.BooleanField(default=False)
+    approved = models.BooleanField(default=False)
     notes = models.TextField()
 
 
