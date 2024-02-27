@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+{% load i18n   static %}
+
+{% block title %}{{ title }} | {% trans "rabbiq" %}{% endblock %}
+{% block extrastyle %}
+    <link rel="stylesheet" type="text/css" href="{% static "assets/css/admin-prod.css" %}"/>
+    <style type="text/css">
+        body.login {
+            background-color: blue;
+        }
+    </style>
+{% endblock %}
+{% block branding %}
+    <h1 id="site-name"><strong>{% trans "Rabbiq" %}</strong></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
