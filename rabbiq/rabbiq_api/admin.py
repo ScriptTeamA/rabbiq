@@ -32,10 +32,29 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ('name',)
 
 @admin.register(TimeEntry)
 class TimeEntryAdmin(admin.ModelAdmin):
+    list_display = ('user', 'task', 'start_time', 'end_time', 'approved')
+    list_filter = ('approved',)
+    search_fields = ('user__username', 'task__name')
+    date_hierarchy = 'start_time'
+    autocomplete_fields = ['task']
+    fieldsets = (
+        (None, {
+            'fields': ('user', 'task')
+        }),
+        ('Time Information', {
+            'fields': ('start_time', 'end_time')
+        }),
+        ('Additional Notes', {
+            'fields': ('notes',)
+        }),
+        ('Approvals', {
+            'fields': ('approved',)
+        }),
+    )
     readonly_fields = ['approved','user']
 
     def get_readonly_fields(self, request, obj=None):
@@ -43,10 +62,10 @@ class TimeEntryAdmin(admin.ModelAdmin):
             return self.readonly_fields + ['approved']
         return self.readonly_fields
 
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        form.base_fields['user'].initial = request.user
-        return form
+    # def get_form(self, request, obj=None, **kwargs):
+    #     form = super().get_form(request, obj, **kwargs)
+    #     form.base_fields['user'].initial = request.user
+    #     return form
     
 
 @admin.register(PerformanceAppraisal)
