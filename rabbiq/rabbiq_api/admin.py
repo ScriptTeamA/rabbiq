@@ -1,29 +1,39 @@
 from django.contrib import admin
-from django.contrib.auth.forms import UserChangeForm
-from .models import User,UserProfile,Task,TimeEntry,PerformanceAppraisal
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
+from django.utils.translation import gettext_lazy as _
+from .models import Employee,Task,TimeEntry,PerformanceAppraisal
 
-class CustomUserChangeForm(UserChangeForm):
-    class Meta(UserChangeForm.Meta):
-        model = User
-        # Exclude the user_permissions field from the form
-        exclude = ['user_permissions']
+class EmployeeInline(admin.StackedInline):
+    model = Employee
+    can_delete = False
+    verbose_name_plural = 'Employee'
 
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    form = CustomUserChangeForm
-    list_display = ("last_name","first_name","email","occupation", "performance")
 
-    def performance(self, obj):
-        result = PerformanceAppraisal.objects.get(user=obj)
-        return result.average_performance
+class CustomUserAdmin(UserAdmin):
+    inlines = (EmployeeInline, )
     
-    def occupation(self, obj):
-        result = UserProfile.objects.get(user=obj)
-        return result.occupation
+    # Customizing the change form
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['show_search_field'] = True  # Adding the search field flag
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
+    # Adding the search field to the change form
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj and 'show_search_field' in request.GET:
+            fieldsets += (
+                (_('Search'), {'fields': ('search_field',)}),
+            )
+        return fieldsets
 
 
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
+
+@admin.register(Employee)
+class EmployeeAdmin(admin.ModelAdmin):
     pass
 
 @admin.register(Task)

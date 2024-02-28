@@ -1,86 +1,28 @@
-from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 from django.db import models
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin, Group
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import Permission
 
-class UserManager(BaseUserManager):
-    def create_user(self, email, phone_number, national_ID, first_name='', last_name='', password=None):
-        if not email:
-            raise ValueError('User must have an email address')
-
-        user = self.model(
-            email=self.normalize_email(email),
-            phone_number=phone_number,
-            national_ID=national_ID,
-            first_name=first_name,
-            last_name=last_name,
-        )
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-    
-    def create_superuser(self, email, phone_number, national_ID, first_name='', last_name='', password=None):
-        user = self.create_user(
-            email=email,
-            phone_number=phone_number,
-            national_ID=national_ID,
-            first_name=first_name,
-            last_name=last_name,
-            password=password,
-        )
-        user.is_staff = True
-        user.is_superuser = True
-        user.set_password(password)
-        user.save(using=self._db)
-        
-        # Assign all available permissions to the superuser
-        permissions = Permission.objects.all()
-        user.user_permissions.set(permissions)
-        
-        return user
-    
-    def add_user_to_group(self, user, group_name):
-        group = Group.objects.get(name=group_name)
-        user.groups.add(group)
-        user.save(using=self._db)
-        return user
-
-class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True, max_length=254)
+class Employee(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    photo = models.ImageField(upload_to='photos/')
     phone_number = models.CharField(max_length=50)
     national_ID = models.CharField(unique=True, max_length=50)
-    first_name = models.CharField(max_length=50, blank=True)
-    last_name = models.CharField(max_length=50, blank=True)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-
-    objects = UserManager()
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = [
-        'phone_number',
-        'national_ID',
-    ]
-
-    def __str__(self):
-        return self.email
-    
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            # New instance, set_password will hash the password
-            self.set_password(self.password)
-        return super().save(*args, **kwargs)
-    class Meta:
-        verbose_name = 'Employee'
-
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    avatar = models.ImageField(upload_to='avatars/')
-    occupation = models.CharField(max_length=50, blank=True)
-    bio = models.TextField(max_length=500, blank=True)
+    department = models.CharField(max_length=100)
+    position = models.CharField(max_length=100)
+    address = models.CharField(max_length=200)
+    date_of_birth = models.DateField()
+    joined_date = models.DateField()
+    salary = models.DecimalField(max_digits=10, decimal_places=2)
+    is_manager = models.BooleanField(default=False)
+    blood_type = models.CharField(max_length=5, blank=True)
+    allergies = models.TextField(blank=True)
+    medical_conditions = models.TextField(blank=True)
+    emergency_contact_name = models.CharField(max_length=100, blank=True)
+    emergency_contact_number = models.CharField(max_length=50, blank=True)
+    is_former_employee = models.BooleanField(default=False)
+    education = models.CharField(max_length=100, blank=True)
+    graduation_year = models.PositiveIntegerField(blank=True, null=True)
+    university = models.CharField(max_length=100, blank=True)
 
     DECAY_FACTOR = 0.95
 
@@ -145,7 +87,7 @@ class Task(models.Model):
 
 
 class TimeEntry(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(Employee, on_delete=models.CASCADE)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
@@ -157,7 +99,7 @@ class TimeEntry(models.Model):
 
 
 class PerformanceAppraisal(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(Employee, on_delete=models.CASCADE)
     average_performance = models.FloatField(default=0.0)
     comments = models.TextField(blank=True)
 
