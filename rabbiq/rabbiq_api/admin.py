@@ -29,12 +29,6 @@ class CustomUserAdmin(UserAdmin):
         return fieldsets
 
 
-admin.site.unregister(User)
-admin.site.register(User, CustomUserAdmin)
-
-@admin.register(Employee)
-class EmployeeAdmin(admin.ModelAdmin):
-    pass
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
@@ -61,5 +55,8 @@ class PerformanceAppraisalAdmin(admin.ModelAdmin):
 
 
 
+
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
 
 
