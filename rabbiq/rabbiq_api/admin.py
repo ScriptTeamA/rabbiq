@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from django.http import HttpRequest
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from .models import Employee,Task,TimeEntry,PerformanceAppraisal,Department
 
@@ -39,8 +41,18 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'start_date', 'end_date','task_status')
     search_fields = ('name',)
     autocomplete_fields = ['assign_to']
+    readonly_fields = ['status']
+
+    def get_fieldsets(self, request, obj=None):
+        user = Employee.objects.get(user=request.user)
+        if user.is_manager == False:
+            return (
+                (None, {'fields': ('name', 'description','start_date', 'end_date')}),
+            )
+        return super().get_fieldsets(request, obj)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -48,8 +60,23 @@ class TaskAdmin(admin.ModelAdmin):
         if not user.is_superuser:
             employee = Employee.objects.get(user=user)
             department = employee.department
-            form.base_fields['assign_to'].queryset = User.objects.filter(employee__department=department, employee__is_manager=True)
+            if employee.is_manager:
+                form.base_fields['assign_to'].queryset = User.objects.filter(employee__department=department, employee__is_manager=True)
         return form
+    
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+
+        if request.user.is_superuser:
+            return queryset
+
+        return queryset.filter(assign_to=request.user)
+    
+    def task_status(self, obj):
+        if obj.status:
+            return mark_safe('<p class="bg-success">completed</p>')
+        else:
+            return mark_safe('<p class="bg-warning">pending</p>')
 
 @admin.register(TimeEntry)
 class TimeEntryAdmin(admin.ModelAdmin):
@@ -79,16 +106,48 @@ class TimeEntryAdmin(admin.ModelAdmin):
             return self.readonly_fields + ['approved']
         return self.readonly_fields
     
-    def get_exclude(self, request, obj=None):
-        # Exclude the 'user' field from the change form
-        if obj is not None:
-            return ['user']
-        return []
+    def save_model(self, request, obj, form, change):
+        # Set the 'user' field to the current user
+        obj.user = request.user
+        super().save_model(request, obj, form, change)
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # Filter the queryset to show only tasks assigned to the current user
+        if not request.user.is_superuser:
+            qs = qs.filter(user=request.user)
+        return qs
+    
+    def has_change_permission(self, request, obj=None):
+        # Disable the ability to change existing entries
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Disable the ability to delete existing entries
+        return False
+    
+
 
 @admin.register(PerformanceAppraisal)
 class PerformanceAppraisalAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('user', 'average_performance','insight','comments')
+    ordering = ['average_performance']
+    search_fields = ('user__username',)
 
+    def insight(self,obj):
+        return "graph here"
+    
+    def has_change_permission(self, request, obj=None):
+        # Disable the ability to change existing entries
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Disable the ability to delete existing entries
+        return False
+
+    def has_add_permission(self, request, obj = None):
+        # Disable the ability to add existing entries
+        return False
 
 
 
