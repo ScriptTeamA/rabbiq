@@ -72,7 +72,7 @@ class TimeEntryAdmin(admin.ModelAdmin):
             'fields': ('approved',)
         }),
     )
-    readonly_fields = ['approved','user']
+    readonly_fields = ['approved', 'user']
 
     def get_readonly_fields(self, request, obj=None):
         if not request.user.has_perm('rabbiq_api.change_timeentry'):
@@ -85,24 +85,15 @@ class TimeEntryAdmin(admin.ModelAdmin):
             return ['user']
         return []
 
-    def save_model(self, request, obj, form, change):
-        # Assign the current user to the 'user' field when creating a new object
-        if not change:
-            obj.user = request.user
-        super().save_model(request, obj, form, change)
-    
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
-        user = request.user
-        if not user.is_superuser:
-            try:
-                employee = Employee.objects.get(user=user)
-                if not employee.is_manager:
-                    form.base_fields['approved'].widget.attrs['disabled'] = 'disabled'
-                else:
-                    form.base_fields['approved'].widget.attrs.pop('disabled', None)
-            except Employee.DoesNotExist:
-                pass
+
+        # Set initial value for the user field
+        form.base_fields['user'].initial = request.user.id
+
+        # Disable the user field
+        form.base_fields['user'].disabled = True
+
         return form
 
 @admin.register(PerformanceAppraisal)
