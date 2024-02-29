@@ -2,12 +2,19 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
-from .models import Employee,Task,TimeEntry,PerformanceAppraisal
+from .models import Employee,Task,TimeEntry,PerformanceAppraisal,Department
+
+
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    search_fields = ('name',)
+
 
 class EmployeeInline(admin.StackedInline):
     model = Employee
     can_delete = False
     verbose_name_plural = 'Employee'
+    autocomplete_fields = ['department']
 
 
 class CustomUserAdmin(UserAdmin):
@@ -33,6 +40,16 @@ class CustomUserAdmin(UserAdmin):
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
     search_fields = ('name',)
+    autocomplete_fields = ['assign_to']
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        user = request.user
+        if not user.is_superuser:
+            employee = Employee.objects.get(user=user)
+            department = employee.department
+            form.base_fields['assign_to'].queryset = User.objects.filter(employee__department=department, employee__is_manager=True)
+        return form
 
 @admin.register(TimeEntry)
 class TimeEntryAdmin(admin.ModelAdmin):
@@ -61,12 +78,32 @@ class TimeEntryAdmin(admin.ModelAdmin):
         if not request.user.has_perm('rabbiq_api.change_timeentry'):
             return self.readonly_fields + ['approved']
         return self.readonly_fields
-
-    # def get_form(self, request, obj=None, **kwargs):
-    #     form = super().get_form(request, obj, **kwargs)
-    #     form.base_fields['user'].initial = request.user
-    #     return form
     
+    def get_exclude(self, request, obj=None):
+        # Exclude the 'user' field from the change form
+        if obj is not None:
+            return ['user']
+        return []
+
+    def save_model(self, request, obj, form, change):
+        # Assign the current user to the 'user' field when creating a new object
+        if not change:
+            obj.user = request.user
+        super().save_model(request, obj, form, change)
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        user = request.user
+        if not user.is_superuser:
+            try:
+                employee = Employee.objects.get(user=user)
+                if not employee.is_manager:
+                    form.base_fields['approved'].widget.attrs['disabled'] = 'disabled'
+                else:
+                    form.base_fields['approved'].widget.attrs.pop('disabled', None)
+            except Employee.DoesNotExist:
+                pass
+        return form
 
 @admin.register(PerformanceAppraisal)
 class PerformanceAppraisalAdmin(admin.ModelAdmin):
