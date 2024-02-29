@@ -25,11 +25,11 @@ class Employee(models.Model):
 
     DECAY_FACTOR = 0.95
 
-    def calculate_performance_rating(self):
+    def calculate_performance_rating(self,user):
         total_hours = 0
         total_rating = 0
 
-        time_entries = TimeEntry.objects.filter(user=self.user).order_by('-end_time')
+        time_entries = TimeEntry.objects.filter(user=user).order_by('-end_time')
         if time_entries.exists():
             last_activity_time = time_entries.first().end_time
             days_since_last_activity = (timezone.now() - last_activity_time).days
@@ -56,8 +56,8 @@ class Employee(models.Model):
 
         return average_performance
 
-    def calculate_performance_comments(self):
-        average_performance = self.calculate_performance_rating()
+    def calculate_performance_comments(self,user):
+        average_performance = self.calculate_performance_rating(user)
         comments = ''
 
         if average_performance >= 80:

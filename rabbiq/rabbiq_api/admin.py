@@ -45,14 +45,19 @@ class TaskAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     autocomplete_fields = ['assign_to']
     readonly_fields = ['status']
+    ordering = ['end_date']
 
     def get_fieldsets(self, request, obj=None):
-        user = Employee.objects.get(user=request.user)
-        if user.is_manager == False:
-            return (
-                (None, {'fields': ('name', 'description','start_date', 'end_date')}),
-            )
-        return super().get_fieldsets(request, obj)
+        try:
+            user = Employee.objects.get(user=request.user)
+            if user.is_manager == False:
+                return (
+                    (None, {'fields': ('name', 'description','start_date', 'end_date')}),
+                )
+            return super().get_fieldsets(request, obj)
+        except:
+            return super().get_fieldsets(request, obj)
+
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -99,12 +104,13 @@ class TimeEntryAdmin(admin.ModelAdmin):
             'fields': ('approved',)
         }),
     )
-    readonly_fields = ['approved', 'user']
+    readonly_fields = ['user']
 
     def get_readonly_fields(self, request, obj=None):
         if not request.user.has_perm('rabbiq_api.change_timeentry'):
             return self.readonly_fields + ['approved']
-        return self.readonly_fields
+        elif request.user.has_perm('rabbiq_api.change_timeentry'):
+            return self.readonly_fields + ['user', 'task', 'start_time', 'end_time','notes']
     
     def save_model(self, request, obj, form, change):
         # Set the 'user' field to the current user
@@ -118,10 +124,6 @@ class TimeEntryAdmin(admin.ModelAdmin):
             qs = qs.filter(user=request.user)
         return qs
     
-    def has_change_permission(self, request, obj=None):
-        # Disable the ability to change existing entries
-        return False
-
     def has_delete_permission(self, request, obj=None):
         # Disable the ability to delete existing entries
         return False
