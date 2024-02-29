@@ -85,17 +85,6 @@ class TimeEntryAdmin(admin.ModelAdmin):
             return ['user']
         return []
 
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-
-        # Set initial value for the user field
-        form.base_fields['user'].initial = request.user.id
-
-        # Disable the user field
-        form.base_fields['user'].disabled = True
-
-        return form
-
 @admin.register(PerformanceAppraisal)
 class PerformanceAppraisalAdmin(admin.ModelAdmin):
     pass
