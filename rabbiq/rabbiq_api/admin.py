@@ -134,7 +134,7 @@ class TimeEntryAdmin(admin.ModelAdmin):
 @admin.register(PerformanceAppraisal)
 class PerformanceAppraisalAdmin(admin.ModelAdmin):
     list_display = ('user', 'average_performance','insight','comments')
-    ordering = ['average_performance']
+    ordering = ['-average_performance']
     search_fields = ('user__username',)
 
     def insight(self, obj):
