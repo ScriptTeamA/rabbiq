@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from .models import Employee,Task,TimeEntry,PerformanceAppraisal,Department
 
@@ -14,7 +15,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 
 class EmployeeInline(admin.StackedInline):
     model = Employee
-    can_delete = False
+    #can_delete = False
     verbose_name_plural = 'Employee'
     autocomplete_fields = ['department']
 
@@ -136,8 +137,11 @@ class PerformanceAppraisalAdmin(admin.ModelAdmin):
     ordering = ['average_performance']
     search_fields = ('user__username',)
 
-    def insight(self,obj):
-        return "graph here"
+    def insight(self, obj):
+        progress_percentage = round(obj.average_performance, 2)
+        return format_html(
+            '<progress value="{}" max="100"></progress> {}%'.format(progress_percentage, progress_percentage)
+        )
     
     def has_change_permission(self, request, obj=None):
         # Disable the ability to change existing entries
