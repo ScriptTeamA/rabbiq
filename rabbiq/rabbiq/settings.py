@@ -65,6 +65,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 AXES_LOCKOUT_PARAMETERS = ["username"]
+AXES_LOCKOUT_URL = "/"
+AXES_LOCKOUT_CALLABLE = "rabbiq_api.views.lockout"
 
 ROOT_URLCONF = 'rabbiq.urls'
 
