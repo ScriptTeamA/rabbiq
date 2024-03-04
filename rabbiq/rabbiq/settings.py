@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     #third party apps
     'rabbiq_api',
+    'axes',
 
 ]
 
@@ -52,7 +53,18 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
+
+
+AUTHENTICATION_BACKENDS = [
+    # AxesStandaloneBackend 
+    'axes.backends.AxesStandaloneBackend',
+    # Django ModelBackend 
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_LOCKOUT_PARAMETERS = ["username"]
 
 ROOT_URLCONF = 'rabbiq.urls'
 
